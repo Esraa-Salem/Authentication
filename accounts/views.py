@@ -36,8 +36,8 @@ def change_password(request):
                 user.set_password(serializer.data.get('new_password'))
                 user.save()
                 update_session_auth_hash(request, user)  # To update session after password change
-                return Response({'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
-            return Response({'error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'success':'True','message': 'Password changed successfully.'},{'data':'null'}, status=status.HTTP_200_OK)
+            return Response({'success':'False','error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -48,21 +48,34 @@ class registerapi(generics.GenericAPIView):
         serializer=self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user= serializer.save()
-        return Response({
+        return Response({'success':'True',
             'status':200,'msg':'created success',
-            'token':AuthToken.objects.create(user)[1]
+            'data':serializer.data,
+            #'token':AuthToken.objects.create(user)[1]
              
         })
 
 class loginapi(knoxLoginView):
     permission_classes = (permissions.AllowAny,)
     def post (self,request,format=None):
+         
          serializer=AuthTokenSerializer(data=request.data)
-         serializer.is_valid(raise_exception=True)
-         user=serializer.validated_data['user']
-         login(request,user)
-         return super(loginapi,self).post(request,format=None)
-
+         #serializer.is_valid(raise_exception=False)
+        
+         if serializer.is_valid():
+            user=serializer.validated_data['user']
+            login(request,user)
+            super(loginapi,self).post(request,format=None)
+            return Response({'success':'True',
+                'status':200,'msg':'created success',
+                'data':request.data,
+                'token':AuthToken.objects.create(user)[1]
+                
+             })
+         else:         
+                 return Response({'success':'False','status':400,'error':'There is wrong in Username or password, Please review your data and try again'})
+                
+         
 
  
 from rest_framework.decorators import api_view, permission_classes
@@ -77,13 +90,13 @@ def user_logout(request):
         try:
             # Delete the user's token to logout
             request.user.delete()
-            return Response({'status':200,'message': 'Successfully logged out.'})
+            return Response({'success':'True','status':200,'data':'null','message': 'Successfully logged out.'})
         except Exception as e:
-            return Response({'status':400,'error': str(e)})
+            return Response({'success':'False','status':400,'error': str(e)})
 
  
-class UserSerializerlist(APIView):
-     
+class UserSerializerlist(APIView ):
+  
      def get(self,request):
          users=CustomUser.objects.all()
          data=UserSerializer(users,many=True).data
@@ -96,26 +109,26 @@ class UserINFO(APIView):
          try:
              users=CustomUser.objects.get(id=id)
          except CustomUser.DoesNotExist:
-             return Response({'status':404,'errors':serializer.errors,'msg':'not found'} )
+             return Response({'success':'False','status':404,'errors':serializer.errors,'msg':'not found'} )
          serializer=UserSerializer(users)
         
-         return Response({'status':200,'data':serializer.data,'msg':'created success'})
+         return Response({'success':'True','status':200,'data':serializer.data,'msg':'created success'})
        
  
      def put(self,request,id):
            try:
              users=CustomUser.objects.get(id=id)
            except CustomUser.DoesNotExist:
-             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+             return Response({'success':'False','status':404,'errors':serializer.errors,'msg':'id not found'} )
            serializer=UserSerializer(users,data=request.data)
           
            if serializer.is_valid():
                  serializer.save()
              
-                 return Response({'status':200,'msg':'Updated successfully'} )
+                 return Response({'success':'True','status':200,'data':serializer.data,'msg':'Updated successfully'} )
           
         
-           return Response({'status':404,'errors':serializer.errors,'msg':'Updated failed'} )
+           return Response({'success':'False','status':404,'errors':serializer.errors,'msg':'Updated failed'} )
           
      def delete(self,request,id):
           try:
@@ -124,7 +137,7 @@ class UserINFO(APIView):
              return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
         
           user.delete()
-          return Response({'status':200,'msg':'deleted is done'} )
+          return Response({'status':200,'data':serializer.data,'msg':'deleted is done'} )
 
 
 
@@ -142,7 +155,7 @@ class LoginWithOTP(APIView):
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
-            return Response({'error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'success':'False','error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
         otp = generate_otp()
         user.otp = otp
@@ -151,7 +164,7 @@ class LoginWithOTP(APIView):
         send_otp_email(email, otp)
         # send_otp_phone(phone_number, otp)
 
-        return Response({'message': 'OTP has been sent to your email.'}, status=status.HTTP_200_OK)
+        return Response({'success':'True','message': 'OTP has been sent to your email.'},{'data':'null'}, status=status.HTTP_200_OK)
 
 
 # accounts/views.py
@@ -167,7 +180,7 @@ class ValidateOTP(APIView):
         try:
             user = CustomUser.objects.get(email=email)
         except CustomUser.DoesNotExist:
-            return Response({'error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'success':'False','error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
 
         if user.otp == otp:
             user.otp = None  # Reset the OTP field after successful validation
@@ -176,6 +189,6 @@ class ValidateOTP(APIView):
             # Authenticate the user and create or get an authentication token
             token, _ = Token.objects.get_or_create(user=user)
 
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
+            return Response({'success':'True','token': token.key},{'data':'null'}, status=status.HTTP_200_OK)
         else:
-            return Response({'error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'success':'False','error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
