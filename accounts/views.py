@@ -36,7 +36,7 @@ def change_password(request):
                 user.set_password(serializer.data.get('new_password'))
                 user.save()
                 update_session_auth_hash(request, user)  # To update session after password change
-                return Response({'success':'True','message': 'Password changed successfully.'},{'data':'null'}, status=status.HTTP_200_OK)
+                return Response({'success':'True','message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
             return Response({'success':'False','error': 'Incorrect old password.'}, status=status.HTTP_400_BAD_REQUEST)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -66,10 +66,11 @@ class loginapi(knoxLoginView):
             user=serializer.validated_data['user']
             login(request,user)
             super(loginapi,self).post(request,format=None)
+            token, _ = Token.objects.get_or_create(user=user)
             return Response({'success':'True',
-                'status':200,'msg':'created success',
+                'status':200,'msg':'login success',
                 'data':request.data,
-                'token':AuthToken.objects.create(user)[1]
+                'token':  token.key
                 
              })
          else:         
@@ -164,7 +165,7 @@ class LoginWithOTP(APIView):
         send_otp_email(email, otp)
         # send_otp_phone(phone_number, otp)
 
-        return Response({'success':'True','message': 'OTP has been sent to your email.'},{'data':'null'}, status=status.HTTP_200_OK)
+        return Response({'success':'True','message': 'OTP has been sent to your email.'}, status=status.HTTP_200_OK)
 
 
 # accounts/views.py
@@ -189,6 +190,6 @@ class ValidateOTP(APIView):
             # Authenticate the user and create or get an authentication token
             token, _ = Token.objects.get_or_create(user=user)
 
-            return Response({'success':'True','token': token.key},{'data':'null'}, status=status.HTTP_200_OK)
+            return Response({'success':'True','token': token.key} , status=status.HTTP_200_OK)
         else:
             return Response({'success':'False','error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)

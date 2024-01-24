@@ -9,7 +9,7 @@ from .views import LoginWithOTP, ValidateOTP
 
 urlpatterns = [
     path('getall/',UserSerializerlist.as_view(),name='get'),
-    path("details/<int:id>/",UserINFO.as_view()),
+    path("details/<str:id>/",UserINFO.as_view()),
     path('register/',registerapi.as_view(),name='register'),
     path('login/',loginapi.as_view(),name='login'),
     path('logout/',user_logout,name='logout'),
