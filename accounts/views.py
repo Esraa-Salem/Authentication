@@ -3,7 +3,7 @@
 
 from django.http import HttpResponse
 from rest_framework.generics import GenericAPIView
-from .serializers import UserSerializer,RegisterSerializer 
+from .serializers import *
 #from django.contrib.auth.models import User
 from rest_framework.response import Response
 from rest_framework import status 
@@ -136,9 +136,9 @@ class UserINFO(APIView):
              user=CustomUser.objects.get(id=id)
           except CustomUser.DoesNotExist:
              return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
-        
+         
           user.delete()
-          return Response({'status':200,'data':serializer.data,'msg':'deleted is done'} )
+          return Response({'status':200,'msg':'deleted is done'} )
 
 
 
@@ -148,7 +148,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .utils import generate_otp, send_otp_email
-from .models import CustomUser
+from .models import *
 
 class LoginWithOTP(APIView):
     def post(self, request):
@@ -193,3 +193,248 @@ class ValidateOTP(APIView):
             return Response({'success':'True','token': token.key} , status=status.HTTP_200_OK)
         else:
             return Response({'success':'False','error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+from django.db.models import Q,OuterRef,Subquery
+class MyInbox(generics.ListAPIView): 
+    serializer_class = MessageSerializer 
+
+    def get_queryset(self): 
+        user_id = self.kwargs['user_id'] 
+
+        last_msg = Subquery(
+            ChatMessage.objects.filter( 
+                Q(sender=OuterRef('id'), reciever=user_id) | 
+                Q(reciever=OuterRef('id'), sender=user_id) 
+            ).order_by('-timestamp')[:1].values('timestamp')
+        )
+
+        messages = ChatMessage.objects.filter( 
+            id__in=Subquery( 
+                CustomUser.objects.filter( 
+                    Q(sent_messages__reciever=user_id) | Q(recieved_messages__sender=user_id) 
+                ).distinct().annotate( 
+                    last_msg=last_msg
+                ).values_list('last_msg').order_by("-last_msg") 
+            ) 
+        ).order_by("-timestamp")
+    
+        return messages
+  
+    
+class GetMessages(generics.ListAPIView):
+    serializer_class = MessageSerializer
+    
+    def get_queryset(self):
+        sender_id = self.kwargs['sender_id']
+        reciever_id = self.kwargs['reciever_id']
+        messages =  ChatMessage.objects.filter(sender_id__in=[sender_id, reciever_id], reciever_id__in=[sender_id, reciever_id])
+        return messages
+
+# from django.utils.decorators import method_decorator    
+# from django.contrib.auth.decorators import login_required
+# @method_decorator(login_required, name='dispatch')
+class SendMessages(generics.CreateAPIView):
+    serializer_class = MessageSerializer
+
+ 
+class ProfileSerializerlist(APIView):
+    def get(self, request):
+        housess = UserProfile.objects.all()
+        serializer = ProfileSerializer(housess, many=True)
+        return Response({
+            'status':200,'msg':'success',
+            'data':serializer.data
+             
+        })
+class ProfileDetail(generics.RetrieveUpdateAPIView):
+    serializer_class = ProfileSerializer
+    queryset = UserProfile.objects.all()
+    #permission_classes = [IsAuthenticated]  
+
+
+class SearchUser(generics.ListAPIView):
+    serializer_class = ProfileSerializer
+    queryset = UserProfile.objects.all()
+    permission_classes = [IsAuthenticated]  
+
+    def list(self, request, *args, **kwargs):
+        username = self.kwargs['username']
+        logged_in_user = self.request.user
+        users = UserProfile.objects.filter(Q(user__username__icontains=username) | Q(full_name__icontains=username) | Q(user__email__icontains=username) & 
+                                       ~Q(user=logged_in_user))
+
+        if not users.exists():
+            return Response(
+                {"detail": "No users found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = self.get_serializer(users, many=True)
+        return Response(serializer.data)
+    
+#Banner...
+class BannerSerializerlist(APIView):
+    def get(self, request):
+        banners = Banner.objects.all()
+        serializer = BannerSerializer(banners, many=True)
+        return Response({
+            'status':200,'msg':'success',
+            'data':serializer.data
+             
+        })
+
+    def post(self, request):
+        serializer = BannerSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+            'status':200,'msg':'created success',
+            'data':serializer.data
+             
+        })
+        return Response({
+            'status':400,'msg':'failed created',
+            'data':serializer.data,
+            'errors':serializer.errors
+             
+        })
+
+
+
+# #House....
+class HouseSerializerlist(APIView):
+    def get(self, request):
+        housess = House.objects.all()
+        serializer = HouseSerializer(housess, many=True)
+        return Response({
+            'status':200,'msg':'success',
+            'data':serializer.data
+             
+        })
+
+    def post(self, request):
+        serializer = HouseSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+            'status':200,'msg':'created success',
+            'data':serializer.data
+             
+        })
+        return Response({
+            'status':400,'msg':'failed created',
+            'data':serializer.data,
+            'errors':serializer.errors
+             
+        })
+    
+  
+
+class HouseINFO(APIView): 
+     
+     def get(self,request,id):
+         try:
+             houses=House.objects.get(id=id)
+         except House.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'not found'} )
+         serializer=HouseSerializer(houses)
+        
+         return Response({'status':200,'data':serializer.data,'msg':'created success'})
+
+  
+ 
+     def put(self,request,id):
+           try:
+             houses=House.objects.get(id=id)
+           except House.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+           serializer= HouseSerializer(houses,data=request.data)
+          
+           if serializer.is_valid():
+                 serializer.save()
+             
+                 return Response({'status':200,'msg':'Updated successfully'} )
+          
+        
+           return Response({'status':404,'errors':serializer.errors,'msg':'Updated failed'} )
+          
+     def delete(self,request,id):
+          try:
+             house=House.objects.get(id=id)
+          except House.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+        
+          house.delete()
+          return Response({'status':200,'msg':'deleted is done'} )
+
+
+#categories...
+class CategorySerializerlist(APIView):
+    def get(self, request):
+        categories = categoryModel.objects.all()
+        serializer = categorySerializer(categories, many=True)
+        return Response({
+            'status':200,'msg':'success',
+            'data':serializer.data
+             
+        })
+
+    def post(self, request):
+        serializer = categorySerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+            'status':200,'msg':'created success',
+            'data':serializer.data
+             
+        })
+        return Response({
+            'status':400,'msg':'failed created',
+            'data':serializer.data,
+            'errors':serializer.errors
+             
+        })
+     
+
+
+class CategoryINFO(APIView): 
+     
+     def get(self,request,id):
+         try:
+             categories=categoryModel.objects.get(id=id)
+         except categoryModel.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'not found'} )
+         serializer=categorySerializer(categories)
+        
+         return Response({'status':200,'data':serializer.data,'msg':'created success'})
+     
+
+
+     def put(self,request,id):
+           try:
+             categories=categoryModel.objects.get(id=id)
+           except categoryModel.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+           serializer=categorySerializer(categories,data=request.data)
+          
+           if serializer.is_valid():
+                 serializer.save()
+             
+                 return Response({'status':200,'msg':'Updated successfully'} )
+          
+        
+           return Response({'status':404,'errors':serializer.errors,'msg':'Updated failed'} )
+          
+     def delete(self,request,id):
+          try:
+             category=categoryModel.objects.get(id=id)
+          except categoryModel.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+        
+          category.delete()
+          return Response({'status':200,'msg':'deleted is done'} )
+             
+
+        

@@ -24,9 +24,9 @@ from django.contrib import admin
 from django.urls import path, include 
 schema_view = get_schema_view(
     openapi.Info(
-        title="BMAT API",
+        title="Graduation API",
         default_version="v1",
-        description="BMAT API v1",
+        description="Graduation API v1",
         terms_of_service="",
         #contact=openapi.Contact(email="sivaperumal2000@gmail.com"),
     ),
@@ -44,15 +44,6 @@ urlpatterns = [
         #path('api-token-auth/',authtoken_views.obtain_auth_token),
         path('app/', include('accounts.urls')),
 ]
-# urlpatterns = [
-#     path('admin/', admin.site.urls,name='admin'),
-#     #path('api-token-auth/',authtoken_views.obtain_auth_token),
-#     path('app/', include('accounts.urls')),
-#     path('api/v1/',
-#          include([
-             
-#              path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
-#          ])
-#          ),
-#     path('oauth/', include('social_django.urls', namespace='social'))     
-# ]
+from django.conf.urls.static import static
+from django.conf import settings
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

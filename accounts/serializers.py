@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User,AbstractUser
-from .models import CustomUser 
+from .models import  *
 # class UserSerializer(serializers.ModelSerializer):
 #     password=serializers.CharField(max_length=65,min_length=8,write_only=True)
 #     email=serializers.EmailField(max_length=255,min_length=4 )
@@ -41,6 +41,64 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class ResetPasswordEmailSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)    
+
+class HouseSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=House
+        fields='__all__'
+
+
+class categorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model=categoryModel
+        fields='__all__'
+
+class BannerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=Banner
+        fields='__all__'
+
+class ProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = UserProfile
+        fields ='__all__'
+    
+    def init(self, *args, **kwargs):
+        super(ProfileSerializer, self).init(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method=='POST':
+            self.Meta.depth = 0
+        else:
+            self.Meta.depth = 3
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    reciever_profile = ProfileSerializer(read_only=True)
+    sender_profile = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = ChatMessage
+        fields = '__all__'
+    def init(self, *args, **kwargs):
+        super(MessageSerializer, self).init(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method=='POST':
+            self.Meta.depth = 0
+        else:
+            self.Meta.depth = 2
+
+
+
+
+ 
+        
+
+
+
+
+ 
+        
 
 
 
