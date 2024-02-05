@@ -89,6 +89,11 @@ class MessageSerializer(serializers.ModelSerializer):
             self.Meta.depth = 2
 
 
+class translateserializer(serializers.ModelSerializer):
+        class Meta:
+          model= TranslatedText
+          fields='__all__'
+
 
 
  

@@ -81,7 +81,7 @@ class ChatMessage(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name="user_messages")
     sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="sent_messages")
     reciever = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name="recieved_messages")
-    messages = models.CharField(max_length=100000)
+    messages = models.TextField (max_length=100000)
     is_read = models.BooleanField(default=False)
     timestamp = models.DateTimeField(auto_now_add=True)
     class Meta:
@@ -97,3 +97,8 @@ class ChatMessage(models.Model):
     def reciever_profile(self):
         reciever_profile = UserProfile.objects.get(user=self.reciever)
         return reciever_profile 
+
+
+class TranslatedText(models.Model):
+    text_to_translate = models.TextField()
+    target_language = models.TextField()

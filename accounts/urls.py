@@ -33,5 +33,6 @@ urlpatterns = [
     path("profile/<str:pk>/", views.ProfileDetail.as_view()),
     path("search/<username>/", views.SearchUser.as_view()),
     path('listprofile/',ProfileSerializerlist.as_view()), 
+    path('translate/',TranslationAPIView.as_view()),
 ] 
  

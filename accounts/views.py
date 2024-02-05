@@ -437,4 +437,22 @@ class CategoryINFO(APIView):
           return Response({'status':200,'msg':'deleted is done'} )
              
 
+#translation
+from googletrans import Translator
+class TranslationAPIView(APIView):
+    def post(self, request, *args, **kwargs):
+        text_to_translate = request.data.get('text_to_translate', '')
+        target_language = request.data.get('target_language', 'ar')
+
+        translator = Translator()
+        translated_text = translator.translate(text_to_translate, dest=target_language).text
+
+        # التحقق من أن النص المترجم ليس None قبل تحويله إلى JSON
+        if translated_text is not None:
+            return Response({'translated_text': translated_text})
+        else:
+            return Response({'error': 'Translation failed'})
+
+ 
+ 
         
