@@ -18,6 +18,7 @@ from knox.views import LoginView as knoxLoginView
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.decorators import authentication_classes,permission_classes,api_view
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated,IsAdminUser
 # from .models import EmalconfirmationToken
 # from .utils import send_confirmation_email
 
@@ -278,7 +279,7 @@ class SearchUser(generics.ListAPIView):
 class BannerSerializerlist(APIView):
     def get(self, request):
         banners = Banner.objects.all()
-        serializer = BannerSerializer(banners, many=True)
+        serializer = BannerSerializer(banners, many=True, context={'request':request})
         return Response({
             'status':200,'msg':'success',
             'data':serializer.data
@@ -455,4 +456,280 @@ class TranslationAPIView(APIView):
 
  
  
+####################################### new task #######################################        
+class offerList(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        # filterrrrrrrrrrrrrrrrr for priceeeeee
+        offers = OfferModels.objects.all().order_by('-price')
+        serializer = offerSerializer(offers, many=True)
+        return Response({
+            'status':200,'msg':'success',
+            'data':serializer.data
+             
+        })
+    
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def new_offer(request):
+    if request.method == 'POST':
+        serializer = offerSerializer(data = request.data)
+        if serializer.is_valid():
+            serializer.validated_data['user'] = request.user
+            serializer.save()
+            return Response({'status':200,'data':serializer.data,'msg':'created success'})
+        return Response({'status':404,'errors':serializer.errors,'msg':'failed created'} )
+
+
+
+class offerDetails(APIView): 
+     
+     def get(self,request,id):
+         try:
+             offers=OfferModels.objects.get(id=id)
+         except OfferModels.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'not found'} )
+         serializer=offerSerializer(offers)
         
+         return Response({'status':200,'data':serializer.data,'msg':'created success'})
+
+  
+ 
+     def put(self,request,id):
+           try:
+             offers=OfferModels.objects.get(id=id)
+           except OfferModels.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+           serializer= offerSerializer(offers,data=request.data)
+          
+           if serializer.is_valid():
+                 serializer.save()
+             
+                 return Response({'status':200,'msg':'Updated successfully'} )
+          
+        
+           return Response({'status':404,'errors':serializer.errors,'msg':'Updated failed'} )
+          
+     def delete(self,request,id):
+          try:
+             offers=OfferModels.objects.get(id=id)
+          except OfferModels.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+        
+          offers.delete()
+          return Response({'status':200,'msg':'deleted is done'} )
+
+
+
+#end offer
+
+
+# startadd offer
+class Addofferr(APIView):
+    def get(self, request):
+        AddOffers = AddOffer.objects.all()
+        serializer = addofferSerializer(AddOffers, many=True)
+        return Response({
+            'status':200,'msg':'success',
+            'data':serializer.data
+             
+        })
+
+    def post(self, request):
+        serializer = addofferSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+            'status':200,'msg':'created success',
+            'data':serializer.data
+             
+        })
+        return Response({
+            'status':400,'msg':'failed created',
+            'data':serializer.data,
+            'errors':serializer.errors
+             
+        })
+    
+  
+
+class Addoffer(APIView): 
+     
+     def get(self,request,id):
+         try:
+             AddOffers=AddOffer.objects.get(id=id)
+         except AddOffer.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'not found'} )
+         serializer=addofferSerializer(AddOffers)
+        
+         return Response({'status':200,'data':serializer.data,'msg':'created success'})
+
+  
+ 
+     def put(self,request,id):
+           try:
+             AddOffers=AddOffer.objects.get(id=id)
+           except AddOffer.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+           serializer= addofferSerializer(AddOffers,data=request.data)
+          
+           if serializer.is_valid():
+                 serializer.save()
+             
+                 return Response({'status':200,'msg':'Updated successfully'} )
+          
+        
+           return Response({'status':404,'errors':serializer.errors,'msg':'Updated failed'} )
+          
+     def delete(self,request,id):
+          try:
+             AddOffers=AddOffer.objects.get(id=id)
+          except AddOffer.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+        
+          AddOffers.delete()
+          return Response({'status':200,'msg':'deleted is done'} )
+    
+#end addoffer
+
+
+
+# startrequest
+class Requestlist(APIView):
+    def get(self, request):
+        requestt = Request.objects.all()
+        serializer = requesrSerializer(requestt, many=True)
+        return Response({
+            'status':200,'msg':'success',
+            'data':serializer.data
+             
+        })
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def new_Request(request):
+    if request.method == 'POST':
+        serializer = requesrSerializer(data = request.data)
+        if serializer.is_valid():
+            serializer.validated_data['user'] = request.user
+            serializer.save()
+            return Response({'status':200,'data':serializer.data,'msg':'created success'})
+        return Response({'status':404,'errors':serializer.errors,'msg':'failed created'} )
+
+    
+
+
+
+class RequestDetails(APIView): 
+     
+     def get(self,request,id):
+         try:
+             requestt=Request.objects.get(id=id)
+         except requestt.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'not found'} )
+         serializer=requesrSerializer(requestt)
+        
+         return Response({'status':200,'data':serializer.data,'msg':'created success'})
+
+  
+ 
+     def put(self,request,id):
+           try:
+             requestt=Request.objects.get(id=id)
+           except Request.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+           serializer= requesrSerializer(requestt,data=request.data)
+          
+           if serializer.is_valid():
+                 serializer.save()
+             
+                 return Response({'status':200,'msg':'Updated successfully'} )
+          
+        
+           return Response({'status':404,'errors':serializer.errors,'msg':'Updated failed'} )
+          
+     def delete(self,request,id):
+          try:
+             requestt=Request.objects.get(id=id)
+          except Request.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+        
+          requestt.delete()
+          return Response({'status':200,'msg':'deleted is done'} )
+#end request
+
+
+class commentlist(APIView):
+    def get(self, request):
+        comments = CommentModels.objects.all()
+        serializer = commentSerializer(comments, many=True)
+        return Response({
+            'status':200,'msg':'success',
+            'data':serializer.data
+             
+        })
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def new_comment(request):
+    if request.method == 'POST':
+        serializer = commentSerializer(data = request.data)
+        if serializer.is_valid():
+            user_profile = UserProfile.objects.get(user= request.user)
+            serializer.validated_data['user'] = request.user
+            serializer.validated_data['profile_image'] = user_profile.image if user_profile else None
+            serializer.save()
+            return Response({'status':200,'data':serializer.data,'msg':'created success'})
+        return Response({'status':404,'errors':serializer.errors,'msg':'failed created'} )
+
+    
+  
+
+class commentDetails(APIView): 
+     
+     def get(self,request,id):
+         try:
+             comments=CommentModels.objects.get(id=id)
+         except CommentModels.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'not found'} )
+         serializer=commentSerializer(comments)
+        
+         return Response({'status':200,'data':serializer.data,'msg':'created success'})
+
+  
+ 
+     def put(self,request,id):
+           try:
+             comments=CommentModels.objects.get(id=id)
+           except CommentModels.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+           serializer= commentSerializer(comments,data=request.data)
+          
+           if serializer.is_valid():
+                 serializer.save()
+             
+                 return Response({'status':200,'msg':'Updated successfully'} )
+          
+        
+           return Response({'status':404,'errors':serializer.errors,'msg':'Updated failed'} )
+          
+     def delete(self,request,id):
+          try:
+             comments=CommentModels.objects.get(id=id)
+          except CommentModels.DoesNotExist:
+             return Response({'status':404,'errors':serializer.errors,'msg':'id not found'} )
+        
+          comments.delete()
+          return Response({'status':200,'msg':'deleted is done'} )
+
+    #end comment

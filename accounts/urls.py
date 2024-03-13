@@ -34,5 +34,22 @@ urlpatterns = [
     path("search/<username>/", views.SearchUser.as_view()),
     path('listprofile/',ProfileSerializerlist.as_view()), 
     path('translate/',TranslationAPIView.as_view()),
+
+
+
+
+    #offer & request
+    ############################## new task ########################
+    path('offer',views.offerList.as_view(),name='user'),
+    path('offer/new', views.new_offer,name='new_offer'),
+    path('offer/<int:id>/',views.offerDetails.as_view()),
+    path('addoffer',views.Addofferr.as_view()),
+    path('addoffer/<int:id>/',views.Addoffer.as_view()),
+    path('request',views.Requestlist.as_view()),
+    path('request/new', views.new_Request,name='new_request'),
+    path('request/<int:id>/',views.RequestDetails.as_view()),
+    path('comment',views.commentlist.as_view()),
+    path('comment/new', views.new_comment,name='new_comment'),
+    path('comment/<int:id>/',views.commentDetails.as_view()),
 ] 
  

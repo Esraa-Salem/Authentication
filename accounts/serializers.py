@@ -26,6 +26,10 @@ class UserSerializer(serializers.ModelSerializer):
        # is_email_confirmed=serializers.BooleanField(default=False)
         model=CustomUser
         fields=('id','username','email','otp') 
+
+
+
+
 class RegisterSerializer(serializers.ModelSerializer):
             class Meta:
               model=CustomUser
@@ -54,9 +58,17 @@ class categorySerializer(serializers.ModelSerializer):
         fields='__all__'
 
 class BannerSerializer(serializers.ModelSerializer):
+    image_url =  serializers.SerializerMethodField()
+
     class Meta:
         model=Banner
-        fields='__all__'
+        fields=('id','image','image_url')
+
+    def get_image_url(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return request.build_absolute_uri(obj.image.url)
+        return None
 
 class ProfileSerializer(serializers.ModelSerializer):
 
@@ -97,7 +109,69 @@ class translateserializer(serializers.ModelSerializer):
 
 
  
+######################## new task ##########################
+          
+class offerImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=offerImages
+        fields=['id','offerimg','images']
+
+
+
+
+class offerSerializer(serializers.ModelSerializer):
+    user_username =serializers.ReadOnlyField(source='user.username')
+    img= offerImageSerializer(many=True,read_only=True)
+    uploaded_images=serializers.ListField(
+        child=serializers.ImageField(max_length=1000000 ,allow_empty_file=False ,use_url=False),
+        write_only=True
+    )
+    class Meta:
+        model= OfferModels
+        fields = ['id','user_username','phone_number','rent_start_time','rent_finish_time','price','location','level','bedrooms','bathrooms','area','description','conditions','ava','rev','furnished','img','uploaded_images']
         
+    def create(self,validated_data):
+        uploaded_images =validated_data.pop("uploaded_images")
+        offerimg=OfferModels.objects.create(**validated_data)
+        for images in uploaded_images:
+            offer_image=offerImages.objects.create(offerimg=offerimg,images=images)
+            
+        return offerimg
+        
+
+          
+
+
+class addofferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=AddOffer
+        fields='__all__'
+        
+
+
+class requesrSerializer(serializers.ModelSerializer):
+    user_username =serializers.ReadOnlyField(source='user.username')
+    class Meta:
+        model=Request
+        fields=['id','user_username','images' , 'date','text' ]
+
+
+
+class commentSerializer(serializers.ModelSerializer):
+    user_username =serializers.ReadOnlyField(source='user.username')
+    profile_image = serializers.SerializerMethodField()
+    requests= requesrSerializer(many=True, read_only=True)
+    class Meta:
+        model=CommentModels
+        fields= ['id','user_username','profile_image' , 'date','text' , 'requests']
+
+    
+    def get_profile_image(self, obj):
+        user_profile = UserProfile.objects.get(user=obj.user)
+        if user_profile.image:
+            return user_profile.image.url
+        return None
+
 
 
 

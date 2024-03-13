@@ -3,6 +3,8 @@ from django.db.models.signals import post_save
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from shortuuid.django_fields import ShortUUIDField
+
+
 class CustomUser(AbstractUser):
     id = ShortUUIDField(primary_key=True,max_length=20,length=10,prefix="rest",alphabet="abcdefhgigklmnoqz93801 ", unique=True)
     email = models.EmailField(unique=True)
@@ -20,8 +22,8 @@ class CustomUser(AbstractUser):
  
 class House(models.Model):
     id=ShortUUIDField(primary_key=True,max_length=20,length=10,prefix="hom",alphabet="abcdefhgigklm93801")
-    image=models.ImageField(upload_to='houses_images')
-    salary=models.FloatField(0.0)
+    image=models.ImageField(upload_to='houses_images' , default='null')
+    salary=models.FloatField(default=0.0)
     favorit=models.BooleanField(default=False)
     location=models.TextField(default='Beni-Seuf')
     discount=models.FloatField(default=0.0)
@@ -46,7 +48,7 @@ class categoryModel(models.Model):
      
 class Banner(models.Model):
     id=ShortUUIDField(primary_key=True,max_length=20,length=10,prefix="bann",alphabet="abcdefhgigklm93801")
-    image=models.ImageField(upload_to='banner_images')
+    image=models.ImageField(upload_to='banner_images/')
  
 
 
@@ -55,8 +57,10 @@ class UserProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
     full_name = models.CharField(max_length=1000)
     bio = models.CharField(max_length=100)
-    image = models.ImageField(upload_to="user_images", default="default.jpg")
+    image = models.ImageField(upload_to="user_images", default="default.jpg" , null= True , blank=True)
     verified = models.BooleanField(default=False)
+    def __str__(self):
+        return self.full_name
 
     def save(self, *args, **kwargs):
         if self.full_name == "" or self.full_name == None:
@@ -102,3 +106,57 @@ class ChatMessage(models.Model):
 class TranslatedText(models.Model):
     text_to_translate = models.TextField()
     target_language = models.TextField()
+
+
+
+################ new task  ########################
+
+class OfferModels(models.Model):
+    images = models.ImageField(upload_to='offer_images/', blank=True, null=True)
+    user = models.ForeignKey(CustomUser, null=True, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=15)
+    rent_start_time = models.DateField() 
+    rent_finish_time = models.DateField()
+    price = models.FloatField()    
+
+    location=models.TextField(default='Beni-Seuf')
+    level=models.IntegerField(default=0)
+    bedrooms=models.IntegerField(default=0)
+    bathrooms=models.IntegerField(default=0)
+    area=models.FloatField(default=0.0)
+    description=models.CharField(max_length=50,default='null')
+    conditions=models.TextField (default='null')
+    ava=models.CharField(max_length=100,default='null')
+    rev=models.BooleanField(default=False)
+    furnished=models.BooleanField(default=False)
+
+    def __str__(self):
+        return self.username
+    
+
+
+class offerImages(models.Model):
+    offerimg=models.ForeignKey(OfferModels, on_delete=models.CASCADE,related_name="img")
+    images=models.ImageField(upload_to='offer_images/', blank=True, null=True)
+    
+
+class AddOffer(models.Model):
+    price = models.FloatField()
+    rent_start_time = models.DateField() 
+    rent_finish_time = models.DateField()
+
+
+class Request(models.Model):
+    user = models.ForeignKey(CustomUser, null=True, on_delete=models.CASCADE)
+    images = models.ImageField(upload_to='request_image/', blank=True, null=True)
+    date=models.DateTimeField(auto_now_add=True)
+    text=models.TextField(max_length=500)
+
+
+
+class CommentModels(models.Model):
+    user = models.ForeignKey(CustomUser, null=True, on_delete=models.CASCADE)
+    profile_image = models.ImageField(upload_to='comment_image/', blank=True, null=True)
+    date=models.DateField(auto_now_add=True)
+    text=models.TextField()
+    requests = models.ForeignKey(Request, on_delete=models.CASCADE, related_name='request_comments', null=True)       
